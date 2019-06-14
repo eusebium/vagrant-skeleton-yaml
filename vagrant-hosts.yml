@@ -1,0 +1,49 @@
+---
+# VM example with all options
+- name: examplevm
+  domain: example.com
+  memory: 2048
+  cpus: 2
+  ip: 192.168.100.220
+  netmask: 255.255.0.0
+  mac: '13:37:de:ad:be:ef'
+  box: bento/centos-7.6
+  box_url: http://url-to-box
+  box_version: 1.2
+  forwarded_ports:
+    - host: 8080
+      guest: 80
+    - host: 8443
+      guest: 443
+  attach_iso:
+    - /tmp/first.iso
+    - /tmp/second.iso
+  extra_disks:
+    - 1024
+    - 4096
+  playbooks:
+    - playbook: ../vagrant-provision-ansible/mount_attached_iso.yml
+      extra_vars: { mounts: [
+        {'dev':'/dev/sr0','mount':'/mnt/first'},
+        {'dev':'/dev/sr1','mount':'/mnt/second'},
+        ] }
+    - ../vagrant-provision-ansible/provision.yml
+    - ../vagrant-provision-ansible/configure_dev_sdb.yml
+  shell_always:
+    - cmd: php /srv/google-dev/bin/console server:start 192.168.52.25:8080 --force
+  synced_folders:
+    - src: test
+      dest: /tmp/test
+    - src: www
+      dest: /var/www/html
+      options:
+        :create: true
+        :owner: root
+        :group: root
+        :mount_options: ['dmode=0755', 'fmode=0644']
+  trigger_before:
+    - when: :up
+      cmd: ansible-playbook first_playbook.yml -e var=var1
+  trigger_after:
+    - when: :destroy,:halt
+      cmd: ansible-playbook first_playbook.yml -e var=var2
