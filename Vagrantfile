@@ -56,7 +56,7 @@ def network_options(host)
 end
 
 
-def custom_synced_folders(vm, host)
+def synced_folders(vm, host)
   return unless host.key?('synced_folders')
   folders = host['synced_folders']
 
@@ -76,9 +76,11 @@ def extra_disks(vm, host)
   extra_disks.each do |extra_disk|
     extra_disk_path = File.join(vb_machine_folder, vm.name, 'disk' + i.to_s + '.vdi')
     vm.customize ['createhd', '--filename', extra_disk_path, '--size', 1 * extra_disk]
-    vm.customize ['storageattach', :id, '--storagectl',
-      'SATA Controller', '--port', 1, '--device',
-      0, '--type', 'hdd', '--medium', extra_disk_path]
+    vm.customize ['storageattach', :id,
+      '--storagectl', 'SATA Controller',
+      '--port', i,
+      '--type', 'hdd',
+      '--medium', extra_disk_path]
     i += 1
   end
 end
@@ -89,8 +91,11 @@ def attach_iso(vm, host)
   attach_iso = host['attach_iso']
   i = 10
   attach_iso.each do |isofile|
-    vm.customize ["storageattach", :id, "--storagectl", "SATA Controller",
-      "--port", i, "--type", "dvddrive", "--medium", isofile]
+    vm.customize ["storageattach", :id,
+      "--storagectl", "SATA Controller",
+      "--port", i,
+      "--type", "dvddrive",
+      "--medium", isofile]
     i += 1
   end
 end
@@ -206,15 +211,15 @@ class VagrantPlugins::ProviderVirtualBox::Action::SetName
     uuid = driver.instance_eval { @uuid }
     ui = env[:ui]
 
-    controller_name="SATA Controller"
+    controller_name = "SATA Controller"
 
     vm_info = driver.execute("showvminfo", uuid)
     has_this_controller = vm_info.match("Storage Controller Name.*#{controller_name}")
 
     if has_this_controller
-      ui.info "Already has the #{controller_name} hdd controller"
+      ui.info "Already has the #{controller_name}"
     else
-      ui.info "creating #{controller_name} controller #{controller_name}"
+      ui.info "Creating #{controller_name}"
       driver.execute('storagectl', uuid,
         '--name', "#{controller_name}",
         '--add', 'sata',
@@ -229,8 +234,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vbguest.auto_update = false
   config.vm.box_check_update = false
-
   config.ssh.insert_key = false
+
   hosts.each do |host|
     config.vm.define host['name'] do |node|
       trigger_before(node, host)
@@ -244,7 +249,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         node.vm.hostname = host['name']
       end
       node.vm.network :private_network, network_options(host)
-      custom_synced_folders(node.vm, host)
+      synced_folders(node.vm, host)
       shell_provisioners_always(node.vm, host)
       forwarded_ports(node.vm, host)
 
