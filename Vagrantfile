@@ -259,7 +259,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.name = PROJECT_NAME.downcase + '_' + host['name']
         attach_iso(vb, host)
         extra_disks(vb, host)
-        vb.customize ['modifyvm', :id, '--groups', '/' + PROJECT_NAME]
+        # vb.customize ['modifyvm', :id, '--groups', '/' + PROJECT_NAME]
       end
       # Ansible provisioning
       provision_ansible(node, host, groups)
