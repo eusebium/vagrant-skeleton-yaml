@@ -18,10 +18,6 @@ PROJECT_NAME = File.basename(Dir.getwd).upcase
 vagrant_hosts = ENV['VAGRANT_HOSTS'] ? ENV['VAGRANT_HOSTS'] : 'vagrant-hosts.yml'
 hosts = YAML.load_file(File.join(Dir.pwd, vagrant_hosts))
 
-vagrant_groups = ENV['VAGRANT_GROUPS'] ? ENV['VAGRANT_GROUPS'] : 'vagrant-groups.yml'
-groups = YAML.load_file(File.join(__dir__, vagrant_groups))
-
-
 def run_locally?
   windows_host? || FORCE_LOCAL_RUN
 end
@@ -183,16 +179,13 @@ def forwarded_ports(vm, host)
 end
 
 
-def provision_ansible(node, host, groups)
+def provision_ansible(node, host)
   ansible_mode = run_locally? ? 'ansible_local' : 'ansible'
   return unless host.key?('playbooks')
   playbooks = host['playbooks']
   playbooks.each do |playbook|
     node.vm.provision ansible_mode do |ansible|
       ansible.compatibility_mode = '2.0'
-      if ! groups.nil?
-        ansible.groups = groups
-      end
       if playbook.kind_of?(String)
         ansible.playbook = playbook
       else
@@ -264,7 +257,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         # vb.customize ['modifyvm', :id, '--groups', '/' + PROJECT_NAME]
       end
       # Ansible provisioning
-      provision_ansible(node, host, groups)
+      provision_ansible(node, host)
     end
   end
 end
