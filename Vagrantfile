@@ -75,7 +75,9 @@ def extra_disks(vm, host)
 
   extra_disks.each do |extra_disk|
     extra_disk_path = File.join(vb_machine_folder, vm.name, 'disk' + i.to_s + '.vdi')
-    vm.customize ['createhd', '--filename', extra_disk_path, '--size', 1 * extra_disk]
+    unless File.exist?(extra_disk_path)
+      vm.customize ['createhd', '--filename', extra_disk_path, '--size', 1 * extra_disk]
+    end
     vm.customize ['storageattach', :id,
       '--storagectl', 'SATA Controller',
       '--port', i,
