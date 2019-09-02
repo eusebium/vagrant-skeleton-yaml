@@ -231,6 +231,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box_check_update = false
   config.ssh.insert_key = false
 
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.enabled = { docker: false }
+  end
+  if Vagrant.has_plugin?("vagrant-timezone")
+    config.timezone.value = :host
+  end
+
   hosts.each do |host|
     config.vm.define host['name'] do |node|
       trigger_before(node, host)
