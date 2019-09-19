@@ -227,10 +227,11 @@ end
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  config.vbguest.auto_update = false
   config.vm.box_check_update = false
   config.ssh.insert_key = false
-
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.enabled = { docker: false }
   end
