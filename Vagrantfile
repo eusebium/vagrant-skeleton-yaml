@@ -74,7 +74,7 @@ def extra_disks(vm, host)
     unless File.exist?(extra_disk_path)
       vm.customize ['createhd',
         '--filename', extra_disk_path,
-        '--size', 1 * extra_disk]
+        '--size', extra_disk.to_i]
     end
     vm.customize ['storageattach', :id,
       '--storagectl', 'SATA Controller',
@@ -97,7 +97,7 @@ def shared_disks(vm, host)
     unless File.exist?(shared_disk_path)
       vm.customize ['createhd',
         '--filename',shared_disk_path,
-        '--size', 1 * shared_disk['size'],
+        '--size', shared_disk['size'].to_i,
         '--format', 'VDI',
         '--variant', 'Fixed']
     end
@@ -261,20 +261,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.box_check_update = false
   config.ssh.insert_key = false
+
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
+
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.enabled = { docker: false }
   end
+
   if Vagrant.has_plugin?("vagrant-timezone")
     config.timezone.value = :host
   end
 
   hosts.each do |host|
     config.vm.define host['name'] do |node|
-      trigger_before(node, host)
-      trigger_after(node, host)
       node.vm.box = host['box'] ||= DEFAULT_BASE_BOX
       node.vm.box_url = host['box_url'] if host.key? 'box_url'
       node.vm.box_version = host['box_version'] if host.key? 'box_version'
@@ -284,9 +285,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         node.vm.hostname = host['name']
       end
       node.vm.network :private_network, network_options(host)
+      forwarded_ports(node.vm, host)
+      trigger_before(node, host)
+      trigger_after(node, host)
       synced_folders(node.vm, host)
       shell_provisioners_always(node.vm, host)
-      forwarded_ports(node.vm, host)
+      provision_ansible(node, host)
 
       node.vm.provider :virtualbox do |vb|
         vb.memory = host['memory'] if host.key? 'memory'
@@ -295,10 +299,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         attach_iso(vb, host)
         extra_disks(vb, host)
         shared_disks(vb, host)
-        # vb.customize ['modifyvm', :id, '--groups', '/' + PROJECT_NAME]
       end
-      # Ansible provisioning
-      provision_ansible(node, host)
+
     end
   end
 end
