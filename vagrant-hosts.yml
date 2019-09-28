@@ -21,6 +21,9 @@
   extra_disks:
     - 1024
     - 4096
+  shared_disks:
+    - size: 1024
+      name: shared_disk1
   playbooks:
     - playbook: ../vagrant-provision-ansible/mount_attached_iso.yml
       extra_vars: { mounts: [
