@@ -223,6 +223,18 @@ def provision_ansible(node, host)
       else
         ansible.playbook = playbook['playbook']
         ansible.extra_vars = playbook['extra_vars'] if playbook.key? 'extra_vars'
+        if playbook.has_key?('groups')
+          groups = playbook['groups']
+          groups.each do |group|
+            ansible.groups = {
+              "#{group}": host['name'],
+              "redhat5:vars": {
+                "ansible_sudo_flags": "-H",
+                "ansible_python_interpreter": "/usr/bin/python2.6",
+              },
+            }
+          end
+        end
       end
     end
   end

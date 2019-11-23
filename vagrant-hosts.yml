@@ -50,3 +50,22 @@
   trigger_after:
     - when: :destroy,:halt
       cmd: ansible-playbook first_playbook.yml -e var=var2
+
+- name: example_redhat5
+  ip: 192.168.100.106
+  box: bento/centos-5.11
+  playbooks:
+    - playbook: ../vagrant-provision-ansible/rhel5_install_python26.yml
+    - playbook: ../vagrant-provision-ansible/provision.yml
+      extra_vars: {
+        "ansible_sudo_flags": "-H",
+        "ansible_python_interpreter": "/usr/bin/python2.6",
+        }
+
+- name: other_example_redhat5
+  ip: 192.168.100.105
+  box: bento/centos-5.11
+  playbooks:
+    - playbook: ../vagrant-provision-ansible/rhel5_install_python26.yml
+    - playbook: ../vagrant-provision-ansible/provision.yml
+      groups: ['redhat5']
