@@ -89,8 +89,10 @@ end
 
 def shared_disks(vm, host)
   return unless host.key?('shared_disks')
+  vb_property_default_machine_folder = `VBoxManage list systemproperties | grep "Default machine folder"`
+  vb_machine_folder = vb_property_default_machine_folder.split(':')[1].strip()
   shared_disks = host['shared_disks']
-  shared_disks_path = "./"
+  shared_disks_path = vb_machine_folder + '/'
   i = 10
   shared_disks.each do |shared_disk|
     shared_disk_path = shared_disks_path + shared_disk['name'] + ".vdi"
